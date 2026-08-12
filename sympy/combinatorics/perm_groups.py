@@ -121,6 +121,7 @@ class PermutationGroup(Basic):
 
     """
     is_group = True
+    _order: int | None
 
     def __new__(cls, *args, dups=True, **kwargs):
         """The default constructor. Accepts Cycle and Permutation forms.
@@ -2995,7 +2996,7 @@ class PermutationGroup(Basic):
         """
         return _orbits(self._degree, self._generators)
 
-    def order(self):
+    def order(self) -> int:
         """Return the order of the group: the number of permutations that
         can be generated from elements of the group.
 
@@ -3035,11 +3036,11 @@ class PermutationGroup(Basic):
             return self._order
         if self._is_sym:
             n = self._degree
-            self._order = factorial(n)
+            self._order = _factorial(n)
             return self._order
         if self._is_alt:
             n = self._degree
-            self._order = factorial(n)/2
+            self._order = _factorial(n)//2
             return self._order
 
         m = prod([len(x) for x in self.basic_transversals])
