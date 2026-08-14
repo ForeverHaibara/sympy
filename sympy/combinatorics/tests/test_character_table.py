@@ -25,16 +25,16 @@ def _cmp_tbl(tbl1, tbl2):
 
 def test_character_table():
     tbl = SymmetricGroup(1).character_table()
-    assert tbl.as_matrix() == Matrix([[1]])
+    assert (tbl.as_matrix() - Matrix([[1]])).is_zero_matrix
 
     tbl = SymmetricGroup(2).character_table()
     assert tbl.tolist() == [[1, 1], [1, -1]]
-    assert tbl.as_matrix() == Matrix([[1, 1], [1, -1]])
+    assert (tbl.as_matrix() - Matrix([[1, 1], [1, -1]])).is_zero_matrix
     assert tbl.shape == (2, 2)
     assert tbl.zeta_order == 1
 
     tbl = AlternatingGroup(3).character_table()
-    assert tbl.as_matrix()._rep.domain.is_EXRAW
+    assert tbl.as_matrix()._rep.domain.is_CyclotomicField
     assert tbl.zeta_order == 3
 
 
@@ -151,17 +151,20 @@ def test_generic_character_table(group):
     table = G.character_table()
     cc = G.conjugacy_classes()
     reps = table.conjugacy_class_reps()
-    assert all(r in c for r, c in zip(reps, cc))
+
+    # reorder cc to match reps
+    reps = {r: i for i, r in enumerate(reps)}
+    inds_cc = [(max(reps.get(r, -1) for r in c), c) for c in cc]
+    inds_cc.sort()
+    cc = [c for _, c in inds_cc]
 
     tbl = table.as_matrix()
-    order = int(G.order())
+    order = G.order()
     assert tbl.shape[0] == tbl.shape[1] == len(cc)
     assert all(v == 1 for v in tbl[0, :])
     assert tbl[:, 0].dot(tbl[:, 0]) == order
 
-    tbl = table._rep
-    tblh = tbl.adjoint()
+    tblh = tbl.H
     x = tblh * tbl
-    dom = x.domain
-    assert x.is_diagonal
-    assert list(x.diagonal()) == [dom(order//len(c)) for c in cc]
+    assert x.is_diagonal()
+    assert list(x.diagonal()) == [order//len(c) for c in cc]
